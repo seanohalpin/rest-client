@@ -260,6 +260,18 @@ describe RestClient::Request do
 		@request.net_http_class.should_not include(Net::HTTP::ProxyDelta)
 	end
 
+  # added SEOH
+  it "creates a proxy class if a proxy url is given to the request" do
+		@request.stub!(:proxy).and_return("http://example.com/")
+		@request.net_http_class.should include(Net::HTTP::ProxyDelta)
+	end
+
+	it "creates a non-proxy class if a proxy url is not given or proxy is unset" do
+    @request.proxy = nil
+		@request.net_http_class.should_not include(Net::HTTP::ProxyDelta)
+	end
+  # end SEOH
+
 	it "logs a get request" do
 		RestClient::Request.new(:method => :get, :url => 'http://url').request_log.should ==
 		'RestClient.get "http://url"'
@@ -387,8 +399,8 @@ describe RestClient::Request do
 
 	it "should set the ssl_client_cert if provided" do
 		@request = RestClient::Request.new(
-			:method => :put, 
-			:url => 'https://some/resource', 
+			:method => :put,
+			:url => 'https://some/resource',
 			:payload => 'payload',
 			:ssl_client_cert => "whatsupdoc!"
 		)
@@ -401,8 +413,8 @@ describe RestClient::Request do
 
 	it "should not set the ssl_client_cert if it is not provided" do
 		@request = RestClient::Request.new(
-			:method => :put, 
-			:url => 'https://some/resource', 
+			:method => :put,
+			:url => 'https://some/resource',
 			:payload => 'payload'
 		)
 		@net.should_not_receive(:cert=).with("whatsupdoc!")
@@ -418,8 +430,8 @@ describe RestClient::Request do
 
 	it "should set the ssl_client_key if provided" do
 		@request = RestClient::Request.new(
-			:method => :put, 
-			:url => 'https://some/resource', 
+			:method => :put,
+			:url => 'https://some/resource',
 			:payload => 'payload',
 			:ssl_client_key => "whatsupdoc!"
 		)
@@ -432,8 +444,8 @@ describe RestClient::Request do
 
 	it "should not set the ssl_client_key if it is not provided" do
 		@request = RestClient::Request.new(
-			:method => :put, 
-			:url => 'https://some/resource', 
+			:method => :put,
+			:url => 'https://some/resource',
 			:payload => 'payload'
 		)
 		@net.should_not_receive(:key=).with("whatsupdoc!")
@@ -442,15 +454,15 @@ describe RestClient::Request do
 		@request.stub!(:response_log)
 		@request.transmit(@uri, 'req', 'payload')
 	end
-	
+
 	it "should default to not having an ssl_ca_file" do
 		@request.ssl_ca_file.should be(nil)
 	end
 
 	it "should set the ssl_ca_file if provided" do
 		@request = RestClient::Request.new(
-			:method => :put, 
-			:url => 'https://some/resource', 
+			:method => :put,
+			:url => 'https://some/resource',
 			:payload => 'payload',
 			:ssl_ca_file => "Certificate Authority File"
 		)
@@ -463,8 +475,8 @@ describe RestClient::Request do
 
 	it "should not set the ssl_ca_file if it is not provided" do
 		@request = RestClient::Request.new(
-			:method => :put, 
-			:url => 'https://some/resource', 
+			:method => :put,
+			:url => 'https://some/resource',
 			:payload => 'payload'
 		)
 		@net.should_not_receive(:ca_file=).with("Certificate Authority File")

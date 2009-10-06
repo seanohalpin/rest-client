@@ -6,12 +6,18 @@ module RestClient
 	# main API.  For example:
 	#
 	#   RestClient::Request.execute(:method => :head, :url => 'http://example.com')
+  #
+  # To specify a per-request proxy:
+	#   RestClient::Request.execute(:method => :get, :url => 'http://example.com', :proxy => ENV['http_proxy'])
 	#
+  # To retrieve the 'raw' response:
+	#   RestClient::Request.execute(:method => :get, :url => 'http://example.com', :raw_response => true)
 	class Request
 		attr_reader :method, :url, :payload, :headers,
 			:cookies, :user, :password, :timeout, :open_timeout,
 			:verify_ssl, :ssl_client_cert, :ssl_client_key, :ssl_ca_file,
 			:raw_response
+    attr_accessor :proxy
 
 		def self.execute(args)
 			new(args).execute
@@ -32,6 +38,7 @@ module RestClient
 			@ssl_client_cert = args[:ssl_client_cert] || nil
 			@ssl_client_key  = args[:ssl_client_key] || nil
 			@ssl_ca_file = args[:ssl_ca_file] || nil
+			@proxy = args[:proxy] || nil
 			@tf = nil # If you are a raw request, this is your tempfile
 		end
 
@@ -61,8 +68,9 @@ module RestClient
 		end
 
 		def net_http_class
-			if RestClient.proxy
-				proxy_uri = URI.parse(RestClient.proxy)
+      proxy = self.proxy || RestClient.proxy
+			if proxy
+				proxy_uri = URI.parse(proxy)
 				Net::HTTP::Proxy(proxy_uri.host, proxy_uri.port, proxy_uri.user, proxy_uri.password)
 			else
 				Net::HTTP
@@ -148,10 +156,10 @@ module RestClient
 				# Taken from Chef, which as in turn...
 				# Stolen from http://www.ruby-forum.com/topic/166423
 				# Kudos to _why!
-				@tf = Tempfile.new("rest-client") 
+				@tf = Tempfile.new("rest-client")
 				size, total = 0, http_response.header['Content-Length'].to_i
 				http_response.read_body do |chunk|
-					@tf.write(chunk) 
+					@tf.write(chunk)
 					size += chunk.size
 					if size == 0
 						display_log("#{@method} #{@url} done (0 length file)")
@@ -170,7 +178,7 @@ module RestClient
 		end
 
 		def process_result(res)
-			if res.code =~ /\A2\d{2}\z/ 
+			if res.code =~ /\A2\d{2}\z/
 				# We don't decode raw requests
 				unless @raw_response
 					self.class.decode res['content-encoding'], res.body if res.body
